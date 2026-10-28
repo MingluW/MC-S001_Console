@@ -1,0 +1,6 @@
+r
+loadfile build/MC-S001_Console.bin, 0x08000000
+verifybin build/MC-S001_Console.bin, 0x08000000
+r
+g
+q

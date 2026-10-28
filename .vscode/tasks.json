@@ -1,0 +1,171 @@
+{
+    "version": "2.0.0",
+    "windows": {
+        "options": {
+            "shell": {
+                "executable": "cmd.exe",
+                "args": [
+                    "/d",
+                    "/c"
+                ]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "label": "Build (make)",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": "autoDetect",
+                "pattern": {
+                    "regexp": "^(.+?\\.[ch]):(\\d+)(?::(\\d+))?:\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Rebuild (make clean + make)",
+            "type": "shell",
+            "command": "make clean && make",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "Download (CMSIS-DAP)",
+            "type": "shell",
+            "command": "make download_cmsisdap",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": "none"
+        },
+        {
+            "label": "Build & Download (CMSIS-DAP)",
+            "type": "shell",
+            "command": "make && make download_cmsisdap",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": "autoDetect",
+                "pattern": {
+                    "regexp": "^(.+?\\.[ch]):(\\d+)(?::(\\d+))?:\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Erase flash (CMSIS-DAP)",
+            "type": "shell",
+            "command": "make erase_cmsisdap",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": "none"
+        },
+        {
+            "label": "Download (JLink)",
+            "type": "shell",
+            "command": "make download_jlink",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": "none"
+        },
+        {
+            "label": "Build & Download (JLink)",
+            "type": "shell",
+            "command": "make && make download_jlink",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": "autoDetect",
+                "pattern": {
+                    "regexp": "^(.+?\\.[ch]):(\\d+)(?::(\\d+))?:\\s+(?:fatal\\s+)?(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Erase flash (JLink)",
+            "type": "shell",
+            "command": "make erase_jlink",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": "none"
+        },
+        {
+            "label": "Start JLink GDB Server",
+            "type": "shell",
+            "command": "make debug_jlink",
+            "options": {
+                "cwd": "${workspaceFolder}/Makefile",
+                "env": {
+                    "PATH": "D:\\Nsing\\Tools\\ArmGNU\\bin;D:\\Nsing\\Tools\\Make;D:\\Jlink\\app\\JLink;${env:PATH}"
+                }
+            },
+            "group": "none",
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}

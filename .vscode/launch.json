@@ -1,0 +1,167 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug JLink (Build+Download+Debug)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Makefile/build/MC-S001_Console.elf",
+            "servertype": "jlink",
+            "device": "N32H473CC",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "set mem inaccessible-by-default off",
+                "mem 0x08000000 0x0803ffff ro"
+            ],
+            "preLaunchTask": "Build (make)",
+            "showDevDebugOutput": "raw",
+            "runToEntryPoint": "main",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+            "svdFile": "${workspaceFolder}/Makefile/N32H473.svd",
+            "serverpath": "D:/Jlink/app/JLink/JLinkGDBServerCL.exe",
+            "armToolchainPath": "D:/Nsing/Tools/ArmGNU/bin",
+            "serverArgs": [
+                "-speed",
+                "400"
+            ]
+        },
+        {
+            "name": "Debug CMSIS-DAP (Build+Download+Debug)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Makefile/build/MC-S001_Console.elf",
+            "servertype": "openocd",
+            "configFiles": [
+                "${workspaceFolder}/Makefile/n32h47x_48x_cmsisdap.cfg"
+            ],
+            "openOCDLaunchCommands": [
+                "adapter speed 100"
+            ],
+            "preLaunchTask": "Build & Download (CMSIS-DAP)",
+            "overrideLaunchCommands": [
+                "monitor reset halt"
+            ],
+            "postLaunchCommands": [
+                "set mem inaccessible-by-default off",
+                "mem 0x08000000 0x080fffff ro"
+            ],
+            "showDevDebugOutput": "raw",
+            "runToEntryPoint": "main",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+            "svdFile": "${workspaceFolder}/Makefile/N32H473.svd"
+        },
+        {
+            "name": "Debug CMSIS-DAP (Stop at Reset)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "executable": "${workspaceFolder}/Makefile/build/MC-S001_Console.elf",
+            "servertype": "openocd",
+            "configFiles": [
+                "${workspaceFolder}/Makefile/n32h47x_48x_cmsisdap.cfg"
+            ],
+            "openOCDLaunchCommands": [
+                "adapter speed 100"
+            ],
+            "overrideLaunchCommands": [
+                "monitor reset halt"
+            ],
+            "postLaunchCommands": [
+                "set mem inaccessible-by-default off",
+                "mem 0x08000000 0x080fffff ro"
+            ],
+            "showDevDebugOutput": "raw",
+            "runToEntryPoint": "main",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+            "svdFile": "${workspaceFolder}/Makefile/N32H473.svd"
+        },
+        {
+            "name": "Attach CMSIS-DAP (Connect without Reset)",
+            "type": "cortex-debug",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Makefile/build/MC-S001_Console.elf",
+            "servertype": "openocd",
+            "configFiles": [
+                "${workspaceFolder}/Makefile/n32h47x_48x_cmsisdap.cfg"
+            ],
+            "openOCDLaunchCommands": [
+                "adapter speed 100"
+            ],
+            "postAttachCommands": [
+                "set mem inaccessible-by-default off",
+                "mem 0x08000000 0x080fffff ro"
+            ],
+            "runToEntryPoint": "main",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+            "showDevDebugOutput": "raw"
+        },
+        {
+            "name": "Debug JLink (Stop at Reset)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Makefile/build/MC-S001_Console.elf",
+            "servertype": "jlink",
+            "device": "N32H473CC",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "set mem inaccessible-by-default off",
+                "mem 0x08000000 0x0803ffff ro"
+            ],
+            "showDevDebugOutput": "raw",
+            "runToEntryPoint": "main",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+            "svdFile": "${workspaceFolder}/Makefile/N32H473.svd",
+            "serverpath": "D:/Jlink/app/JLink/JLinkGDBServerCL.exe",
+            "armToolchainPath": "D:/Nsing/Tools/ArmGNU/bin",
+            "serverArgs": [
+                "-speed",
+                "400"
+            ]
+        },
+        {
+            "name": "Attach JLink (Connect without Reset)",
+            "type": "cortex-debug",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Makefile/build/MC-S001_Console.elf",
+            "servertype": "jlink",
+            "device": "N32H473CC",
+            "interface": "swd",
+            "postAttachCommands": [
+                "set mem inaccessible-by-default off",
+                "mem 0x08000000 0x080fffff ro"
+            ],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "raw",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+            "svdFile": "${workspaceFolder}/Makefile/N32H473.svd",
+            "serverpath": "D:/Jlink/app/JLink/JLinkGDBServerCL.exe",
+            "armToolchainPath": "D:/Nsing/Tools/ArmGNU/bin",
+            "serverArgs": [
+                "-speed",
+                "400"
+            ]
+        }
+    ]
+}

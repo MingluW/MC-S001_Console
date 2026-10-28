@@ -1,0 +1,28 @@
+# Build outputs; preserve source-controlled flash_op/*.bin.
+Makefile/build/
+**/__pycache__/
+*.pyc
+
+# Local snapshots and board flash dumps.
+backup-before-bringup/
+board-backup/
+*.before-*
+
+# Temporary connection/inspection scripts from initial bring-up.
+Makefile/probe-connection.jlink
+Makefile/backup-before-flash.jlink
+Makefile/check-flash.jlink
+
+# Editor/OS temporary files. Shared .vscode configuration is intentional.
+*.tmp
+*.bak
+*~
+Thumbs.db
+.DS_Store
+
+# Local secrets must never be versioned.
+.env
+.env.*
+!.env.example
+*.pem
+*.key

@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "N32H47X_48X",
+            "includePath": [
+                "${workspaceFolder}/USER/inc",
+                "${workspaceFolder}/Driver/CMSIS/core",
+                "${workspaceFolder}/Driver/CMSIS/device",
+                "${workspaceFolder}/Driver/n32h47x_48x_std_periph_driver/inc"
+            ],
+            "defines": [
+                "N32H473",
+                "USE_STDPERIPH_DRIVER"
+            ],
+            "cStandard": "c99",
+            "intelliSenseMode": "gcc-arm",
+            "compilerArgs": [
+                "-Werror=implicit-function-declaration"
+            ],
+            "compilerPath": "D:/Nsing/Tools/ArmGNU/bin/arm-none-eabi-gcc.exe"
+        }
+    ],
+    "version": 4
+}
