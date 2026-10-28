@@ -67,6 +67,7 @@ Driver中SDK代码保留原版权与许可声明，不能将整份工程视为�
 
 ## 版本管理
 
-当前准备作为第一个“LCD点亮基线”提交。功能开发按可编译、可验证的阶段独立提交。
+当前已保存“LCD点亮基线”，标签 `bringup-lcd-v0.1.0`，代码提交 `7e272df`。功能开发按可编译、可验证的阶段独立提交。
 已提交且共享的错误变更优先用git revert生成回退提交；不要默认用reset --hard丢弃本地工作。
-私有GitHub仓库的创建和首次推送状态以Docs/PROJECT_STATUS.md及实际远端为准。
+私有仓库：[MingluW/MC-S001_Console](https://github.com/MingluW/MC-S001_Console)。
+首次提交和基线标签均已推送，后续工作从main继续。

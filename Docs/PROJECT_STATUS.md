@@ -83,4 +83,6 @@
 保留源码/SDK/配置/文档/测试，排除build、旧备份、Flash备份及临时探测脚本。
 GitHub账号已确认MingluW，提交作者mingluw <mokamiyou@gmail.com>。
 目标私有仓库：https://github.com/MingluW/MC-S001_Console。
-基线提交说明：LCD全亮已实板确认；远端推送结果以Git实际记录及会话验证为准。
+基线提交 `7e272df5e8b1d1bbc3476db386b919c9723a30e1`：LCD全亮已实板确认。
+已推送main和标签bringup-lcd-v0.1.0，并通过git ls-remote核对；GitHub页面确认Private。
+后续功能阶段独立提交，重要实测节点打标签；不得默认强制推送或丢弃未提交修改。
