@@ -43,7 +43,8 @@ USER/inc/lcd.h                     屏幕模块接口
 - Lcd_IsBusy：初始化或帧提交仍在进行；出错需结合Lcd_HasError判断。
 - Lcd_HasError：本地发送接口失败，不检测屏幕是否连接或屏幕供电。
 
-当前App_Init启动LCD并设置全亮；之后保持全亮，不周期性全亮/全灭。
+点亮基线的App_Init启动LCD并设置全亮；之后保持全亮，不周期性全亮/全灭。
+后续按键演示版本改为上电显示0.0，见KEYS_LCD_DEMO.md。
 用户此前注释掉的uart_echo_process、log_process调用保持关闭，没有重新启用。
 已有闪灯仍为亮灭各1500ms，日志时间和串口发送继续按原结构运行。
 
@@ -73,9 +74,9 @@ USER/inc/lcd.h                     屏幕模块接口
 运行软件测试：先在Makefile目录make，再运行python Tests/test_lcd.py（从工程根目录）。
 依赖及临时安装位置同UART_LOG.md。
 
-## 下一阶段
+## 后续进度
 
-将旧Tube1~Tube4和misc段码表整理为const映射，提供数字/图标设置接口；
-继续按“改缓存 → 标记变化 → Lcd_Process分步提交”的方式扩展。
-对每个数字、图标、小数点单独验证，再接入app_display。
+已将旧Tube1~Tube4的数字及速度图标/小数点整理为const映射，接入app_display，
+继续按“改缓存 → 标记变化 → Lcd_Process分步提交”的方式扩展；按键演示记录见KEYS_LCD_DEMO.md。
+其余图标和页面按实际需求逐项扩展验证。
 保持Cypress工程只读，新增硬件优化需对比这份已点亮基线。

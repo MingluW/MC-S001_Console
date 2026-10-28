@@ -53,10 +53,16 @@ def gpio_hook(machine, address, size, context):
     return_value(0)
 
 
+def set_all(is_on):
+    # 通过生产版本使用的完整帧接口验证全亮/全灭；旧SetAll可能被链接器裁剪。
+    uc.mem_write(env["scratch"], bytes([255 if is_on else 0]) * 16)
+    assert call("Lcd_SetFrame", env["scratch"]) == 1
+
+
 uc.hook_add(env["UC_HOOK_CODE"], gpio_hook)
 assert call("BoardLcdPort_Write9", 0x1FF) == 0  # 尚未初始化
 call("Lcd_Init", 0)
-call("Lcd_SetAll", 1)
+set_all(True)
 assert levels[gpio_a] & (cs_pin | clock_pin) == cs_pin | clock_pin
 assert levels[gpio_b] & (1 << 5)  # 背光高有效
 for now in [0, 99]:
@@ -103,27 +109,27 @@ assert call("Lcd_IsReady") == 1 and call("Lcd_IsBusy") == 0
 print("PASS: old Cypress command/data sequence, reset/20ms delays, mode3/MSB/9 clocks, full-ON")
 
 before = len(words)
-call("Lcd_SetAll", 1)
+set_all(True)
 call("Lcd_Process", 1000)
 assert len(words) == before  # 相同内容不重复刷新
-call("Lcd_SetAll", 0)
+set_all(False)
 for now in range(1001, 1021):
     call("Lcd_Process", now)
 assert [word for _, word in words[before:]] == header + [0x100] * 16
 assert call("Lcd_IsBusy") == 0
 
 before = len(words)
-call("Lcd_SetAll", 1)
+set_all(True)
 for now in range(1100, 1107):
     call("Lcd_Process", now)
-call("Lcd_SetAll", 0)  # 传输中改目标，不得破坏本次快照
+set_all(False)  # 传输中改目标，不得破坏本次快照
 for now in range(1107, 1140):
     call("Lcd_Process", now)
 assert [word for _, word in words[before:]] == header + [0x1FF] * 16 + header + [0x100] * 16
 print("PASS: full-OFF, unchanged-frame suppression, mid-transfer snapshot")
 
 assert call("BoardLcdPort_Write9", 0x200) == 0
-call("Lcd_SetAll", 1)
+set_all(True)
 force_send_failure = True
 call("Lcd_Process", 2000)
 assert call("Lcd_HasError") == 1 and call("Lcd_IsBusy") == 0

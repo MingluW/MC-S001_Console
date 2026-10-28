@@ -15,8 +15,8 @@ USER/
     n32h47x_48x_it.c           生成的中断入口
     App/                      应用源文件
       app.c                   初始化及主循环调度（已实现）
-      app_control.c           统一业务入口（规划）
-      app_display.c           应用显示（规划）
+      app_control.c           统一状态变更入口（已实现显示演示）
+      app_display.c           根据只读状态组织显示（已实现）
       app_selftest.c          板卡验证（规划）
     Board/                    板级源文件
       board_led.c             LED501 开关（已实现）
@@ -26,11 +26,11 @@ USER/
       board_lcd_port.c        LCD GPIO 9位接口（点亮通过）
       board_spi.c             通用硬件SPI（按需规划）
       board_can.c             CAN（规划）
-      board_keys.c            原始按键输入（规划）
+      board_keys.c            六路面板键原始输入（已实现）
     Modules/                  功能源文件，按需建立
       log/                    ERR/WARN/DBG日志（已编码）
-      keys/                   消抖、短按、长按、连发
-      lcd/                    初始化/全亮已实现，独立段码映射待移植
+      keys/                   六键消抖、加减连发、停止优先（已实现）
+      lcd/                    初始化、完整帧提交、速度数字段码（已实现）
       powerboard/             下控编解码、通信状态机
       pc_protocol/            上位机协议
       buzzer/                 蜂鸣器时序

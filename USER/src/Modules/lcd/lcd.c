@@ -5,8 +5,6 @@
 
 #include "board_lcd_port.h"
 
-#define LCD_FRAME_BYTES 16u
-
 typedef enum
 {
     LCD_STATE_OFF = 0,
@@ -78,6 +76,20 @@ void Lcd_Init(uint32_t now_ms)
     memset(sending_frame, 0, sizeof(sending_frame));
     is_dirty = true;
     is_refreshing = false;
+}
+
+bool Lcd_SetFrame(const uint8_t frame[LCD_FRAME_BYTES])
+{
+    if ((frame == NULL) || (state == LCD_STATE_OFF) || (state == LCD_STATE_ERROR))
+    {
+        return false;
+    }
+    if (memcmp(desired_frame, frame, sizeof(desired_frame)) != 0)
+    {
+        memcpy(desired_frame, frame, sizeof(desired_frame));
+        is_dirty = true;
+    }
+    return true;
 }
 
 void Lcd_SetAll(bool is_on)
