@@ -133,14 +133,18 @@ void BoardCan_Process(uint32_t now_ms)
     {
         return;
     }
-    if (FDCAN_CheckBufTxResult(BOARD_CAN_DEVICE, FDCAN_TX_BUFFER0) != RESET)
+    /* 先确认请求已结束，再读取完成位，避免两次读取间发送完成而误报失败。 */
+    if (FDCAN_CheckTxBufRequest(BOARD_CAN_DEVICE, FDCAN_TX_BUFFER0) == RESET)
     {
-        tx_state = BOARD_CAN_TX_SENT;
-    }
-    else if (FDCAN_CheckTxBufRequest(BOARD_CAN_DEVICE, FDCAN_TX_BUFFER0) == RESET)
-    {
-        tx_state = BOARD_CAN_TX_FAILED;
-        ++stats.tx_failed;
+        if (FDCAN_CheckBufTxResult(BOARD_CAN_DEVICE, FDCAN_TX_BUFFER0) != RESET)
+        {
+            tx_state = BOARD_CAN_TX_SENT;
+        }
+        else
+        {
+            tx_state = BOARD_CAN_TX_FAILED;
+            ++stats.tx_failed;
+        }
     }
     else if ((uint32_t)(now_ms - tx_started_ms) >= BOARD_CAN_TX_TIMEOUT_MS)
     {

@@ -4,7 +4,7 @@ import runpy
 import struct
 
 env = runpy.run_path(str(Path(__file__).with_name("test_uart_log.py")))
-from unicorn import UC_HOOK_MEM_WRITE
+from unicorn import UC_HOOK_MEM_WRITE, UC_HOOK_MEM_READ, UC_HOOK_CODE
 from elftools.elf.elffile import ELFFile
 from elftools.dwarf.dwarf_expr import DWARFExprParser
 
@@ -141,6 +141,43 @@ assert call("BoardCan_TrySend", frame_pointer(payload), 11) == 2
 complete_tx()
 call("BoardCan_Process", 12)
 assert call("BoardCan_GetTxState") == 2
+# 硬件恰在首次状态读取后完成：旧顺序会把旧TXBTO=0和新TXBRP=0误判为失败。
+assert call("BoardCan_TrySend", frame_pointer(payload), 13) == 0
+call("BoardCan_GetStats", scratch)
+failed_before = read32(scratch + stats_fields["tx_failed"])
+status_reads = []
+completion_due = False
+
+
+def finish_during_status_read(machine, access, address, size, value, context):
+    global completion_due
+    if address in (can + 0xCC, can + 0xD8):
+        status_reads.append(address)
+        if len(status_reads) == 1:
+            completion_due = True
+
+
+def finish_after_instruction(machine, address, size, context):
+    global completion_due
+    if completion_due:
+        complete_tx()
+        completion_due = False
+
+
+race_hook = uc.hook_add(UC_HOOK_MEM_READ, finish_during_status_read)
+instruction_hook = uc.hook_add(UC_HOOK_CODE, finish_after_instruction)
+try:
+    call("BoardCan_Process", 14)
+    assert status_reads
+    assert call("BoardCan_GetTxState") != 3, "completion between status reads misreported as failure"
+    call("BoardCan_Process", 15)
+    assert call("BoardCan_GetTxState") == 2
+    call("BoardCan_GetStats", scratch)
+    assert read32(scratch + stats_fields["tx_failed"]) == failed_before
+finally:
+    uc.hook_del(race_hook)
+    uc.hook_del(instruction_hook)
+print("PASS: hardware completion between status reads is SENT without false failure")
 assert call("BoardCan_TrySend", frame_pointer(payload), 20) == 0
 complete_tx(False)
 call("BoardCan_Process", 21)
