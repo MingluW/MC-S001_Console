@@ -10,6 +10,8 @@ inputs = test["scan"].__globals__
 digits, misc = test["digits"], test["misc"]
 header = test["lcd_env"]["header"]
 FULL, COUNT, WAIT, STARTING, SPEED, INCLINE, STOPPED = range(7)
+start_delay_ms = test["start_delay_ms"]
+start_speed_x10 = test["start_speed_x10"]
 now = 0
 raw = 0
 
@@ -135,11 +137,11 @@ assert state()["screen"] == STARTING and state()["demo_incline"] == 0
 settle()
 start_frame_ms = now
 assert frame() == incline(0)
-settle(start_frame_ms + 499)
+settle(start_frame_ms + start_delay_ms - 1)
 assert state()["screen"] == STARTING
-settle(start_frame_ms + 500)
+settle(start_frame_ms + start_delay_ms)
 assert state()["screen"] == SPEED
-assert frame() == test["expected_frame"](0)
+assert frame() == test["expected_frame"](start_speed_x10)
 # 按住START不产生连发，也不再次启动。
 settle(now + 1000, 4)
 assert state()["screen"] == SPEED
@@ -151,8 +153,8 @@ assert frame() == incline(1)
 settle(now + 3000)
 assert state()["screen"] == INCLINE  # 手动坡度页不自动切回。
 tap(2)
-assert state()["screen"] == SPEED and state()["demo_speed_x10"] == 1
-assert frame() == test["expected_frame"](1)
+assert state()["screen"] == SPEED and state()["demo_speed_x10"] == start_speed_x10 + 1
+assert frame() == test["expected_frame"](start_speed_x10 + 1)
 tap(16)
 assert state()["screen"] == INCLINE and state()["demo_incline"] == 0
 tap(16)  # 下限仍可以进入并保持坡度页。
@@ -164,7 +166,7 @@ for _ in range(18):
 assert state()["demo_incline"] == 15
 release()
 settle()
-print("PASS: START grade=0 for 500ms, speed default KPH, manual page retention, incline limits")
+print("PASS: START grade=0 for configured delay, speed=0.3 KPH, manual page retention, incline limits")
 
 # 停止优先于START，同时按下不会马上被START覆盖；STOP期间加减无效。
 press(4 | 8)
@@ -181,8 +183,8 @@ settle()
 assert state()["screen"] == STARTING and frame() == incline(0)
 release()
 settle()
-settle(now + 500)
-assert state()["screen"] == SPEED and state()["demo_speed_x10"] == 0
+settle(now + start_delay_ms)
+assert state()["screen"] == SPEED and state()["demo_speed_x10"] == start_speed_x10
 # 刚进入速度页不到50ms，STOP也必须立即提交，不被刷新限速推迟。
 press(8)
 assert state()["screen"] == STOPPED

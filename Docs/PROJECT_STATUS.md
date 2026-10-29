@@ -169,3 +169,66 @@ feat: add key-driven LCD UI with startup animation and start-stop flow。
 此前“本轮未提交”的记录是各实现步骤完成时的历史状态，相关源码随此次版本保存统一纳入。
 本阶段已编译并通过Tests/test_ui_flow.py及其回归；最新动画、KPH/MPH与新增按键流程尚未烧写。
 保留已实板确认的速度加减结论及LCD点亮基线标签，不将本次保存标记为新实板验证节点。
+
+
+## CAN资料初审（2026-10-28）
+
+已读取D:/Nsing/CAN通讯协议的核心总线/FP2文档及速度、坡度、控制器Feature相关页面，
+对照上控/下控CAN收发器与终端图纸；具体事实、文档矛盾、接入问题和实施顺序见CAN_REVIEW.md。
+需要优先确认既有下控固件/协议版本、实际Feature子集、KPH/%与Hz/Count边界、
+START/STOP语义、心跳失联规则、ACK事务超时及实际节点/终端配置。
+未新增CAN源码，未改动固件、未烧写或发送CAN报文；本次审阅记录尚未提交GitHub。
+
+
+CAN范围进一步确认：下控已有固件，首版开始/停止/速度加减，速度KPH、停止先写速度0，
+心跳由上控发送，故障显示沿用Cypress并优先无应答/过流/过压。
+通用文档未确定跑步机独立使能报文，也未给出本机保活报文/周期/失联阈值；
+Cypress心跳500ms仅作旧实现参考，不当作CAN要求。详细依据及故障映射边界见CAN_REVIEW.md。
+本次未修改固件、未烧写、未提交GitHub。
+
+
+## CAN FD首版速度与串口日志（2026-10-28）
+
+按用户要求先实现开始/速度目标（KPH）、停止写零，暂不发心跳及坡度控制。
+用户追加初始0.3 KPH，已添加APP_START_SPEED_X10=3，保留0.1步长与原0~30范围；
+当前APP_START_INCLINE_MS已为1000，保留该值，本轮未改回500。
+BoardCan配置FDCAN1、PA15 TX/PB3 RX、主PLL240M/6=40M、250k/2M、标准FD+BRS ISO、SJW20/4。
+使用静态SRAM1224字节消息区、16*64字节RX FIFO及单个专用TX缓冲，主循环每轮最多接收4帧。
+SDK自动重发关闭；TX200ms取消等待不阻塞，未确认取消不覆盖RAM；Bus-off不自动恢复。
+默认文档索引1，发送0x201/接收0x241，实际下控节点、线路和协议子集仍待实板确认。
+
+新增Modules/powerboard下fp2.c、powerboard.c、can_trace.c，App新增app_powerboard.c，
+头文件统一inc；Makefile纳入新目录与SDK fdcan.c，VS Code现有include路径已覆盖。
+开始直接写Feature301=0.3，无猜测独立使能指令；停止清除待发非零目标并优先写0，失败保留零目标再尝试。
+初次目标应答后订阅302/2108/2380以打印反馈；厂商故障仅记录原始float位型，不猜映射为过流/过压。
+事务等硬件完成后等待FP2应答，500ms无应答锁存，非零不自动重发，明确STOP/START后才重新发起。
+日志区分TX_REQ、TX_SENT、RX原始字节、FP2 ACK/Error/Event、总线失败及应用超时，
+包含CAN ID、FD/BRS、物理长度和完整数据。64字节拆32字节两行，拥塞时丢失有统计，不阻塞业务。
+正常速度0.3的CAN12字节为08 12 06 2D 01 9A 99 99 3E 00 00 00。
+界面仍显示请求目标，未将ACK当作实际速度或停机确认。MPH接口仍为此前显示演示，当前CAN只按KPH对接。
+
+构建通过：text 33484 / data 104 / bss 11192字节，无新增模块编译警告，既有SDK/nosys/RWX与关闭自测警告保留。
+Tests/test_can.py通过，执行实际ARM ELF和SDK消息RAM/收发代码：时钟/位时序/DLC、float逐值、
+ACK/Error、错节点、Bus-off、取消与回绕、分片/残帧、停止优先与零目标重试、日志拥塞、App接入。
+Tests/test_ui_flow.py回归通过，适配0.3初始速度和当前配置的启动停留；回显关闭导致RX读取API测试仍SKIP。
+本轮未烧写、未采集实板CAN/串口波形、未验证电机动作或下控兼容；未提交GitHub。
+联调操作、报文与源码阅读入口见CAN_BRINGUP.md；原始文档疑点见CAN_REVIEW.md。
+
+## CAN发送超时排查（2026-10-29）
+
+用户提供实板串口日志：0.3KPH TX_REQ后200ms取消并TX_FAIL，无TX_SENT或RX；订阅也失败。
+通过J-Link只读寄存器确认CCCR=340、PSR=707、ECR=0、PB3复用输出且输入采样0，未复位或改写实板。
+发现上版BoardCan_Init沿用TX的AF_PP配置到RX，是初始化疏漏；修复PB3为INPUT，保留上拉及AF26。
+同时修正DLEC掩码未移位（1792应解码7），增加RX/ACT/CCCR诊断，禁止初始速度TX失败后继续订阅。
+GCC通过：text33752 / data104 / bss11200；Tests/test_can.py通过，补充RX方向/路由和诊断回归。
+本次修复未烧写，实板通信是否恢复待确认，未验证电机动作，未提交GitHub。
+寄存器证据及下一步观察点见CAN_DEBUG_20261029.md。
+
+用户进一步明确：上述截图测试未连接下控。因此无CAN硬件ACK、无TX_SENT/FP2回复本身为预期，
+不能据此判断下控不兼容或声称修复后必然通信成功。当前只观察到请求超时取消且主循环仍运行；
+控制器完整收发尚待内部回环或对端接入验证，RX方向修复是否解决该现象也尚未实测。
+
+2026-10-29用户提供修复后日志并再次确认未接下控：RX=1、ACT=1、CCCR=340，
+TX_REQ后立即TX_FAIL，随后TEC=8/REC=0、LEC=DLEC=7；不再出现200ms等待，也不再继续订阅。
+表明控制器空闲和RX高电平已观察到，发送失败符合无应答节点条件；完整CAN收发仍未验证。
+TX_FAIL与STATUS中TEC快照不同由100ms诊断更新造成。详情见CAN_DEBUG_20261029.md。

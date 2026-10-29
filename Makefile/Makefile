@@ -82,7 +82,9 @@ C_DIRS += ../USER/src/Board
 C_DIRS += ../USER/src/Modules/log
 C_DIRS += ../USER/src/Modules/lcd
 C_DIRS += ../USER/src/Modules/keys
+C_DIRS += ../USER/src/Modules/powerboard
 SRC_OBJS_DIRS += ../Driver/n32h47x_48x_std_periph_driver/src/n32h47x_48x_usart.c
+SRC_OBJS_DIRS += ../Driver/n32h47x_48x_std_periph_driver/src/n32h47x_48x_fdcan.c
 
 SRC_OBJS_DIRS += $(foreach DIR, $(C_DIRS), $(wildcard $(DIR)/*.c))
 C_SOURCES = $(SRC_OBJS_DIRS)

@@ -154,6 +154,9 @@ def speed():
     return struct.unpack("<H", uc.mem_read(call("AppControl_GetState"), 2))[0]
 
 
+app_config = (env["root"] / "USER/inc/app_control.h").read_text(encoding="utf-8")
+start_delay_ms = int(re.search(r"#define APP_START_INCLINE_MS (\d+)u", app_config).group(1))
+start_speed_x10 = int(re.search(r"#define APP_START_SPEED_X10 (\d+)u", app_config).group(1))
 time_ms = 0
 
 
@@ -177,8 +180,13 @@ for phase in range(5):
     call("AppControl_Process", phase * 501 + 500, 1)
 time_ms = 2504
 tap(4)  # START
-control_scan(time_ms + 500, 0)
-time_ms += 500
+assert speed() == start_speed_x10
+control_scan(time_ms + start_delay_ms, 0)
+time_ms += start_delay_ms
+# 单独确认初始0.3，随后减到0，继续原有上下限测试。
+for _ in range(start_speed_x10):
+    tap(1)
+assert speed() == 0
 
 tap(1)
 assert speed() == 0

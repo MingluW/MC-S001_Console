@@ -17,6 +17,7 @@ USER/
       app.c                   初始化及主循环调度（已实现）
       app_control.c           统一状态变更入口（已实现显示演示）
       app_display.c           根据只读状态组织显示（已实现）
+      app_powerboard.c        UI目标到CAN请求装配（已编码，待实板）
       app_selftest.c          板卡验证（规划）
     Board/                    板级源文件
       board_led.c             LED501 开关（已实现）
@@ -25,13 +26,13 @@ USER/
       board_stdio.c           printf重定向及有界libc堆（已编码）
       board_lcd_port.c        LCD GPIO 9位接口（点亮通过）
       board_spi.c             通用硬件SPI（按需规划）
-      board_can.c             CAN（规划）
+      board_can.c             CAN FD单缓冲轮询（已编码，待实板）
       board_keys.c            六路面板键原始输入（已实现）
     Modules/                  功能源文件，按需建立
       log/                    ERR/WARN/DBG日志（已编码）
       keys/                   六键消抖、加减连发、停止优先（已实现）
       lcd/                    初始化、完整帧提交、速度数字段码（已实现）
-      powerboard/             下控编解码、通信状态机
+      powerboard/             FP2速度、应答、停止优先与收发日志（已编码）
       pc_protocol/            上位机协议
       buzzer/                 蜂鸣器时序
   inc/                        全部手写头文件集中存放，保留生成的头文件

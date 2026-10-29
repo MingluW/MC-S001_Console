@@ -13,6 +13,7 @@
 #include "keys.h"
 #include "app_control.h"
 #include "app_display.h"
+#include "app_powerboard.h"
 
 #define APP_LED_INTERVAL_MS 1500u
 #define APP_LOG_INTERVAL_MS 5000u
@@ -40,6 +41,7 @@ void App_Init(void)
     Lcd_Init(last_led_change_ms);
     Keys_Init(last_led_change_ms);
     AppControl_Init();
+    AppPowerboard_Init();
     AppDisplay_Init(last_led_change_ms);
     AppDisplay_Process(last_led_change_ms, AppControl_GetState());
 
@@ -49,7 +51,7 @@ void App_Init(void)
     (void)ERR("[SELFTEST] error log example (not a real fault)");
     (void)WARN("[SELFTEST] warning log example");
     (void)DBG("[APP] boot, LED interval=%ums", APP_LED_INTERVAL_MS);
-    (void)DBG("[UI] boot animation, START/STOP and speed/incline demo; no motor commands");
+    (void)DBG("[UI] START=0.3 KPH, speed writes over CAN; incline display only");
 }
 
 static void led_process(uint32_t now_ms)
@@ -139,6 +141,7 @@ void App_Process(void)
     led_process(now_ms);
     Keys_Process(now_ms);
     AppControl_Process(now_ms, Lcd_IsReady() && !Lcd_IsBusy());
+    AppPowerboard_Process(now_ms, AppControl_GetState());
     AppDisplay_Process(now_ms, AppControl_GetState());
     lcd_process(now_ms);
 //    uart_echo_process();

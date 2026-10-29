@@ -163,7 +163,7 @@ void AppControl_Process(uint32_t now_ms, bool is_frame_complete)
              (app_state.screen == APP_SCREEN_STOPPED)))
         {
             app_state.demo_incline = 0u;
-            app_state.demo_speed_x10 = 0u;
+            app_state.demo_speed_x10 = APP_START_SPEED_X10;
             enter_screen(APP_SCREEN_START_INCLINE);
         }
         else if ((app_state.screen == APP_SCREEN_SPEED) ||

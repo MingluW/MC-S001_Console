@@ -60,6 +60,7 @@ Driver中SDK代码保留原版权与许可声明，不能将整份工程视为�
 
 - [LCD点亮记录](Docs/LCD_BRINGUP.md)：引脚、时序、已确认现象、后续工作。
 - [按键与LCD演示](Docs/KEYS_LCD_DEMO.md)：开机动画、开始/停止、速度/坡度切页、非阻塞刷新和测试。
+- [CAN速度与收发日志](Docs/CAN_BRINGUP.md)：0.3 KPH开始、停止写零、原始TX/RX与FP2解析。
 - [串口和日志](Docs/UART_LOG.md)：接线、接口和测试依赖。
 - Tests/test_lcd.py执行实际ARM ELF中的状态机和GPIO输出逻辑，并回归串口日志测试。
 - LCD测试会读取旧Cypress工程作命令序列参考；新电脑运行需具备相应只读参考路径。

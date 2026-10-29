@@ -7,6 +7,7 @@
 /* 首版仅显示演示；范围和步长不是已经确认的产品参数。 */
 #define APP_DEMO_SPEED_MAX_X10 300u
 #define APP_DEMO_SPEED_STEP_X10 1u
+#define APP_START_SPEED_X10 3u /* 0.3 KPH */
 #define APP_DEMO_INCLINE_MAX 15u
 #define APP_BOOT_STEP_MS 500u
 #define APP_WAIT_BLINK_MS 1000u
@@ -33,7 +34,7 @@ typedef enum
 
 typedef struct
 {
-    uint16_t demo_speed_x10; /* 显示值的10倍，不代表电机实际或目标速度。 */
+    uint16_t demo_speed_x10; /* 目标KPH的10倍；当前显示请求值，不表示真实反馈或已执行。 */
     AppSpeedUnit speed_unit;
     uint16_t demo_incline; /* 整数档位，仅显示演示。 */
     AppScreen screen;
@@ -49,7 +50,7 @@ void AppControl_Init(void);
  */
 bool AppControl_SetSpeedUnit(AppSpeedUnit unit);
 
-/** 推进界面时序并最多消费9条输入（1停止+8普通）；不发送下控命令。
+/** 推进界面时序并最多消费9条输入（1停止+8普通）；下控请求由AppPowerboard装配。
  * now_ms单位毫秒；is_frame_complete表示最新目标帧已提交完成，初始化中/出错为false。
  * 动画停留从对应帧发送完成后计时；不等待，仅主循环。
  */
