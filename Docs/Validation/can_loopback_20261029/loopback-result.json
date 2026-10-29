@@ -1,0 +1,17 @@
+{
+  "magic": 1128353356,
+  "phase": 3,
+  "expected": 110,
+  "tx_count": 7,
+  "rx_count": 7,
+  "matched": 7,
+  "failure": 3,
+  "last_id": 520,
+  "last_length": 7,
+  "tx_hash": 1764902400,
+  "rx_hash": 1537384096,
+  "cccr": 992,
+  "tec": 0,
+  "rec": 0,
+  "elapsed_ms": 1001
+}

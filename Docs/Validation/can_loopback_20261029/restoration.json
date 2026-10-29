@@ -1,0 +1,10 @@
+{
+  "baseline_commit": "5b28e2823c930e0a2c3bafa516bf72c22ac9180a",
+  "bin_sha256": "2d86e66e33f34ba562ffad7a9fb7bebd30e282780a7bd9bb8fb8a6770f768d3b",
+  "bin_size": 33864,
+  "jlink_verifybin": "successful",
+  "cccr": "0x340",
+  "test": "0x80",
+  "source_hashes_match": true,
+  "temporary_fix_retained": false
+}
