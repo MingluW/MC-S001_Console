@@ -1,0 +1,22 @@
+PASS: TX not-ready/invalid/full, hardware-busy, ring wraparound
+PASS: actual newlib printf -> _write -> UART queue
+PASS: log levels, filtering, CRLF, oversized/null/full rejection
+PASS: timestamp minute/hour/day carry, uint32 wrap, logging-off continuity
+SKIP: RX read API was removed by linker (echo task disabled)
+PASS: bounded newlib heap rejects out-of-range allocation
+PASS: old Cypress command/data sequence, reset/20ms delays, mode3/MSB/9 clocks, full-ON
+PASS: full-OFF, unchanged-frame suppression, mid-transfer snapshot
+PASS: invalid 9-bit value and local failure/backlight-off handling
+PASS: GPIO polarity, debounce/bounce, press/repeat/release, no catch-up bursts
+PASS: held-at-boot suppression, timer wrap, queue capacity/drop accounting
+PASS: default KPH, runtime MPH/KPH selection, invalid-unit rejection, demo value retained
+PASS: actual key-to-AppControl events, 0.0/30.0 limits, simultaneous keys
+PASS: numeric frames vs old tables, decimal point/icons/leading blanks, invalid inputs
+PASS: unit-only change refreshes MPH, invalid AppState unit ignored
+PASS: AppDisplay initial frame, 50ms coalescing, unchanged suppression, timer wrap
+PASS: frame ownership/copy, failed display submission remains pending for retry
+PASS: frame-complete boot timing, 3333/2222/1111/0000, 8888 1s blink, wait ignores +/-
+PASS: START grade=0 for configured delay, speed=0.3 KPH, manual page retention, incline limits
+PASS: STOP priority, ---- immediate submission, stopped ignores +/- and START restarts flow
+PASS: STOP bypasses full queue, discards stale events, START is press-only
+PASS: screen timer uint32 wrap, STOP interrupts boot animation

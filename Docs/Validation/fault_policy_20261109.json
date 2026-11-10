@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-09",
+  "console": {
+    "text": 34852,
+    "data": 104,
+    "bss": 11200,
+    "bin_bytes": 34964,
+    "bin_sha256": "b5f2b8b1b2f5ebc97d66cb0932363d6f0508a9abc35735b1dd16c701d4638cae"
+  },
+  "tests": [
+    "Console/Tests/test_fault_policy.py (includes test_can.py)",
+    "Console/Tests/test_ui_flow.py",
+    "TEST/Tests/test_fault_injection.py (includes test_console_link.py)"
+  ],
+  "flashed": false,
+  "hardware_validated": false,
+  "committed": false,
+  "pushed": false,
+  "test_firmware_changed": false
+}

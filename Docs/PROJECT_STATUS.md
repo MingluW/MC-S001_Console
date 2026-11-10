@@ -276,3 +276,123 @@ Console无业务超时；TEST LCD9位输出帧检查通过。详情见TEST的Doc
 此前修复章节的“未提交GitHub”为当时状态，相关改动纳入本次版本保存。
 本轮没有修改固件行为或执行烧写，沿用已通过的构建与CAN回归结果。
 仓库地址：https://github.com/MingluW/MC-S001_Console 。
+
+
+## 按键故障注入升级（2026-11-06）
+
+按用户本轮明确规则实现：TEST START进入/取消草稿、坡度加减遍历00~16、STOP执行；
+预发送/正常页各2s，速度变化/停止抢占正常页并保留草稿。00为无硬件ACK的Bus Monitoring；
+01保持硬件ACK但抑制全部FP2发送；16仅恢复通信，不清普通故障。
+普通故障采用本地约定2108 float32小端整数2~15，独立注入帧/结果，硬件发送成功后显示
+约500ms七段SEnd；失败E-0F短暂提示并保留草稿，显式STOP可重试。
+模式切换等待旧TX结束/取消确认，丢弃旧队列/残片，SDK INIT/CCE/MON/Start握手异步200ms超时。
+
+Console增加2108过滤与E-0X显示，10~15用A~F；普通故障锁存到Console复位，
+START/STOP、零值反馈和通信恢复不清除。TEST保留已成功发出的故障到TEST复位，重新订阅仍反馈。
+通信TX失败/FP2超时显示E-01，收到匹配有效业务应答后自动解除，不自动恢复旧运行目标。
+无心跳，空闲恢复接线不会立即被检测；TEST选16后Console按STOP/START建立下一次有效通信。
+本轮只增加错误显示及测试注入，既有启停/速度策略保留。
+
+构建通过：TEST text34808/data104/bss13248，BIN34920字节；
+Console text34616/data104/bss11200，BIN34728字节。
+原有nosys/RWX、Console关闭自测函数等警告保留，无新增手写代码警告。
+软件验证：TEST test_peer.py、test_fault_injection.py（含双独立ARM ELF基础互通），
+Console test_can.py、test_ui_flow.py均通过。覆盖2~15值与错误帧、非法值拒绝、普通故障锁存/复位、
+00/01区别及通信恢复、会话取消/切页/抢占、失败保留重试、SEND关联、模式超时/计时回绕。
+RX回显API仍因关闭演示被链接器移除，沿用SKIP。
+
+未烧写、未实板验证、未提交/推送；当前实板仍为此前版本。软件模型不覆盖真实CAN ACK电气、
+NVIC自动调度、模式切换时序及LCD字形外观。操作见TEST Docs/FAULT_INJECTION.md，
+详细验证摘要见TEST Docs/Validation/fault_injection_20261106.json与同名log。
+TEST修改前USER/Docs备份：C:/Users/mingluw/AppData/Local/Temp/mcs001-upgrade-20261106-173723。
+
+
+## 通信按键重试与普通故障停止锁定（2026-11-09）
+
+用户要求：00/01通信异常后允许速度加减发请求；其他已上报故障不能继续运行，也不能被后续错误覆盖。
+Console已修改：通信失败保留当前运行会话，失败目标仍不自动重发，只有新的速度键输入重新提交；
+有效匹配应答清E-01并补订阅。已STOP或尚未START时加减不启动；明确FP2 Error拒绝仍需STOP/START。
+首个2108整数2~15在协议层和App层分别锁存；同一RX批次的第二个错误也不覆盖首因。
+收到首个故障立即撤销待发速度/订阅，协议API拒绝START/速度；App清零目标、进入停止状态并请求STOP。
+旧硬件TX取消确认前不复用缓冲；零目标发送失败保留、按500ms状态机重试。START及加减忽略，
+STOP、零值反馈、其他错误和恢复通信都不能清除首因，复位后才可重新建立正常会话。
+没有故障死循环：各Process有界快速返回，接收、STOP重试、LCD、按键采样、UART和LED继续调度。
+
+Console GCC构建通过：text34852/data104/bss11200，BIN34964字节；无新增代码警告，继承警告保留。
+Console Tests/test_fault_policy.py（含test_can.py）、Tests/test_ui_flow.py、
+TEST Tests/test_fault_injection.py（含双独立ARM ELF链路）通过；覆盖实际速度键重试、恢复后补订阅、
+首因锁存、同包多错误、普通故障禁止重启/加减、清旧速度、取消未确认不覆盖、STOP失败重试及复位。
+TEST固件源码/二进制未改，只更新双固件回归期望和操作说明。
+本轮未烧写、未实板验证、未提交/推送；零速度请求和ACK均不等于已测得真实电机停止。
+Console本轮修改前备份：C:/Users/mingluw/AppData/Local/Temp/mcs001-policy-20261109-7zjwyxda。
+
+
+## E-01下按键临时显示设置速度（2026-11-10）
+
+用户要求00/01通信故障时加减键能短暂显示设置速度，避免E-01持续遮挡操作反馈。
+仅修改Console AppControl/AppDisplay及AppState：速度键/连发触发目标速度预览，
+APP_COMM_SPEED_PREVIEW_MS=500ms；从LCD目标帧完成后计时，新输入重新计时。
+预览不清除E-01，超时回错误页；有效应答后留正常页；STOP/切坡度页取消预览。
+普通故障2~15仍立即抢占、首因锁存、禁止启动/加减，不会被预览覆盖；协议与TEST固件未修改。
+
+GCC构建通过：text35144/data104/bss11208，BIN35256字节。继承警告保留，无新增代码警告。
+Tests/test_fault_policy.py（包含CAN回归）与Tests/test_ui_flow.py通过，新增核对实际提交的速度/错误帧、
+500ms边界、LCD忙时不提前结束、连续操作重计时、uint32回绕、ACK恢复及普通故障优先级。
+本轮未烧写、未实板验证、未提交/推送。备份位于
+C:/Users/mingluw/AppData/Local/Temp/mcs001-preview-20261110-59y4kp_o。
+
+
+## 下控开发参考文档（2026-11-10）
+
+新增Docs/LOWER_CONTROLLER_INTERFACE.md，明确301目标速度/停止、302反馈、2108普通故障、
+2380厂家电机故障日志及Feature8当前未使用；列出2~15映射、float32字节和完整CAN示例。
+区分00/01/16本地测试操作与Feature Event，强调2~15是本地约定而非已确认厂商标准。
+对照当前源码及本地FP2/Feature资料整理，未修改固件，未新增构建/测试/烧写或推送。
+
+
+## 安全锁非阻塞停速与全屏警示（2026-11-10）
+
+按用户确认方案实现Console安全锁：PA9高断开立即触发，PB6高禁止SAFEKEY_R硬件通路。
+BoardSafety手工GPIO初始化先预置禁止再切输出；App每轮在按键/CAN请求前检测，接回稳定100ms。
+断开清零目标、撤销旧速度和订阅，协议层禁止START/速度请求并优先提交301=0；
+旧TX取消未确认前不复用缓冲，STOP失败保留并按现有500ms重试。重复锁状态不重置重试计时。
+全屏全FF/全00警示，亮灭各500ms，从LCD目标帧完成计时；警示覆盖普通页和错误显示，
+通信/普通故障仍接收处理，普通故障首因不清除。全部键继续采样/消抖并消费事件，
+START/加减忽略，STOP不打断警示；CAN/LCD/UART/1500ms蓝灯继续非阻塞调度。
+接回后目标仍0、保持停止；所有键释放稳定30ms后才接受新操作，须重新按START。
+若已有普通故障则恢复首因错误页并继续禁止启动。接回不恢复旧速度。
+
+GCC构建通过：text36464/data104/bss11240，BIN36576字节。
+无新增编译警告，继承的SDK/关闭自测/nosys/RWX警告保留。
+Tests/test_safety_lock.py（包含test_fault_policy.py及CAN回归）、test_ui_flow.py通过；
+覆盖GPIO配置/电平、旧速度抢占和取消确认、STOP失败重试、ACK不解除锁、
+LCD忙/全亮全灭/500ms、接回抖动/100ms、按住START及释放30ms、上电缺锁、
+普通故障保留、计时回绕和App_Process实际接入。详细结果见Validation/safety_lock_20261110.json。
+Makefile已确认新Board源码纳入，VS Code既有USER/inc已覆盖。说明见SAFETY_LOCK.md。
+未烧写、未实板验证、未提交/推送；未改TEST/Cypress。实板安全锁电平、SAFEKEY_R动作、
+全屏外观和真实电机停转待验证，软件STOP请求/ACK不代表实测已停。
+本轮修改前备份：C:/Users/mingluw/AppData/Local/Temp/mcs001-safety-20261110-5248ohkv。
+
+
+## 安全锁提示改为5AFE（2026-11-10）
+
+用户指定安全锁触发直接显示5AFE，替代上节的全屏明灭方案。
+新增LcdSegments_BuildSafety，使用既有5/A/F/E字符表，无单位/图标/小数点，常亮显示。
+删除AppState明灭相位、500ms警示计时及宏；显示优先级、CAN停速与重试、100ms接回、
+按键释放30ms、重新START及普通故障首因保留策略不变。未改Board/Powerboard与TEST。
+构建通过：text36332/data104/bss11232，BIN36444字节，无新增代码警告。
+Tests/test_safety_lock.py（含故障策略/CAN回归）通过，新增对照旧Cypress逐段核对5AFE，
+覆盖常亮保持、LCD忙及重复提交抑制；原有UI回归结果见Validation/safety_5afe_ui_20261110.log。
+未烧写、未实板验证、未提交/推送；5AFE实板字形及电机停转待验证。
+本轮修改前备份：C:/Users/mingluw/AppData/Local/Temp/mcs001-safe-ui-20261110-h2xd2ibh。
+
+
+## Console当前版本保存至GitHub（2026-11-10）
+
+按用户明确要求，本次版本保存包含当前Console全部待提交源码、构建配置、测试与文档：
+2108首因故障锁存/停止禁止、通信异常下新速度输入重试与500ms预览，
+PA9/PB6安全锁检测/硬件禁止/零速度请求/接回保护，以及最终常亮5AFE提示。
+此前各阶段“未提交/推送”的条目是当时历史记录，相关内容随本次版本保存纳入。
+沿用本对话已通过的GCC构建、test_safety_lock.py（含故障策略/CAN）与test_ui_flow.py结果；
+本次上传操作不修改固件行为、不重复烧写，不增加实板验证结论。
+只保存Console仓库，未提交TEST仓库。Makefile/build构建产物按既有.gitignore排除。

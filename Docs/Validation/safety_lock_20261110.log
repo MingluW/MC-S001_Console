@@ -1,0 +1,25 @@
+PASS: TX not-ready/invalid/full, hardware-busy, ring wraparound
+PASS: actual newlib printf -> _write -> UART queue
+PASS: log levels, filtering, CRLF, oversized/null/full rejection
+PASS: timestamp minute/hour/day carry, uint32 wrap, logging-off continuity
+SKIP: RX read API was removed by linker (echo task disabled)
+PASS: bounded newlib heap rejects out-of-range allocation
+PASS: hardware completion between status reads is SENT without false failure
+PASS: real SDK init/RAM, 250k/2M timing, DLC, TX busy/success/failure, cancel + wrap, RX
+PASS: all 0.0..30.0 FP2 float32 values, 0.3=9A99993E, subscriptions, malformed/Inf rejection
+PASS: no boot control/heartbeat, start0.3, ACK, subscription/event, coalescing, STOP preemption
+PASS: RX input mode/AF route, normalized DLEC=7, RX/ACT/CCCR diagnostics, no subscribe after TX fail
+PASS: 500ms application timeout, nonzero target not retried, failed STOP retained/retried
+PASS: actual UART output raw TX/RX, TX completion, ACK, fragmented event, bad prefix, full64 bytes
+PASS: wrong CAN ID/sender ignored, Error locks run target, fragment timeout/resynchronization
+PASS: App screen START->CAN0.3, speed change->CAN0.4, STOP->zero, boot remains silent
+PASS: trace queue full is counted, stalled UART is nonblocking, log resumes with overflow report
+PASS: real UI speed +/- retries TX failure and FP2 timeout; ACK clears E-01 and restores subscription
+PASS: first fault wins within one RX batch; queued speed discarded; pending TX cancel/STOP/retry nonblocking
+PASS: normal fault locks START/+/- and survives later faults/zero/communication recovery until reset
+PASS: E-01 speed-key preview renders target immediately for 500ms; LCD wait/repeat/wrap/ACK/fault priority
+PASS: real SDK PA9 input/high=disconnected; PB6 inhibit preloaded before output, active high
+PASS: lock preempts queued/in-flight nonzero target, waits for cancellation; STOP retry/ACK stays locked
+PASS: LCD-busy/frame-complete 500ms warning phases; bounce/held-key recovery requires new START
+PASS: ordinary first fault survives safety reconnect; boot-disconnected/wraparound remain stopped
+PASS: real App_Process detects raw lock before requests and returns while servicing CAN/UART/LED/LCD

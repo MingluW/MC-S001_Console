@@ -1,12 +1,21 @@
 #include "app_control.h"
 
 #include "keys.h"
+#include "board_keys.h"
 #include "log.h"
 
 static AppState app_state;
 static uint32_t reported_key_drops;
 static uint32_t last_screen_step_ms;
 static bool is_waiting_for_frame;
+static uint8_t latched_error;
+static bool is_preview_waiting_for_frame;
+static uint32_t preview_started_ms;
+static bool is_reconnect_pending;
+static uint32_t reconnect_started_ms;
+static bool is_safety_keys_blocked;
+static bool is_keys_release_pending;
+static uint32_t keys_release_started_ms;
 
 static void enter_screen(AppScreen screen)
 {
@@ -16,6 +25,15 @@ static void enter_screen(AppScreen screen)
 
 void AppControl_Init(void)
 {
+    app_state.is_safety_active = false;
+    is_reconnect_pending = false;
+    is_safety_keys_blocked = false;
+    is_keys_release_pending = false;
+    latched_error = 0u;
+    app_state.is_speed_preview = false;
+    is_preview_waiting_for_frame = false;
+    preview_started_ms = 0u;
+    app_state.error_code = 0u;
     app_state.demo_speed_x10 = 0u;
     app_state.demo_incline = 0u;
     app_state.countdown_digit = 3u;
@@ -24,6 +42,78 @@ void AppControl_Init(void)
     reported_key_drops = 0u;
     last_screen_step_ms = 0u;
     enter_screen(APP_SCREEN_BOOT_ALL);
+}
+
+void AppControl_UpdateSafety(uint32_t now_ms, bool is_disconnected)
+{
+    if (is_disconnected)
+    {
+        is_reconnect_pending = false;
+        if (!app_state.is_safety_active)
+        {
+            app_state.is_safety_active = true;
+            app_state.demo_speed_x10 = 0u;
+            app_state.is_speed_preview = false;
+            enter_screen(APP_SCREEN_STOPPED);
+            is_safety_keys_blocked = true;
+            is_keys_release_pending = false;
+            (void)WARN("[SAFETY] disconnected; inhibit run, request STOP");
+        }
+    }
+    else if (app_state.is_safety_active)
+    {
+        if (!is_reconnect_pending)
+        {
+            is_reconnect_pending = true;
+            reconnect_started_ms = now_ms;
+        }
+        if ((uint32_t)(now_ms - reconnect_started_ms) >= APP_SAFETY_RECONNECT_MS)
+        {
+            app_state.is_safety_active = false;
+            is_reconnect_pending = false;
+            app_state.demo_speed_x10 = 0u;
+            app_state.is_speed_preview = false;
+            enter_screen(APP_SCREEN_STOPPED);
+            (void)DBG("[SAFETY] reconnected; remain stopped, release keys then START");
+        }
+    }
+}
+
+static void safety_keys_process(uint32_t now_ms)
+{
+    if (app_state.is_safety_active || !is_safety_keys_blocked) { return; }
+    bool has_pressed_key = BoardKeys_Read() != 0u;
+    for (uint32_t i = 0u; i < KEYS_COUNT; ++i)
+    {
+        has_pressed_key = has_pressed_key || Keys_IsPressed((KeysId)i);
+    }
+    if (has_pressed_key)
+    {
+        is_keys_release_pending = false;
+        return;
+    }
+    if (!is_keys_release_pending)
+    {
+        is_keys_release_pending = true;
+        keys_release_started_ms = now_ms;
+    }
+    if ((uint32_t)(now_ms - keys_release_started_ms) >= APP_SAFETY_KEYS_RELEASE_MS)
+    {
+        is_safety_keys_blocked = false;
+        is_keys_release_pending = false;
+    }
+}
+
+void AppControl_SetErrors(uint8_t communication_error, uint8_t controller_error)
+{
+    if ((latched_error == 0u) && (controller_error >= 2u) && (controller_error <= 15u))
+    {
+        latched_error = controller_error;
+        app_state.demo_speed_x10 = 0u;
+        enter_screen(APP_SCREEN_STOPPED);
+    }
+    app_state.error_code = latched_error != 0u ? latched_error : communication_error;
+    if (app_state.error_code != 1u) { app_state.is_speed_preview = false; }
 }
 
 bool AppControl_SetSpeedUnit(AppSpeedUnit unit)
@@ -92,7 +182,7 @@ static void screen_time_process(uint32_t now_ms, bool is_frame_complete)
     }
 }
 
-static void adjustment_process(KeysId id)
+static bool adjustment_process(KeysId id)
 {
     bool is_speed_key = (id == KEYS_SPEED_DEC) || (id == KEYS_SPEED_INC);
     bool is_incline_key = (id == KEYS_INCLINE_DEC) || (id == KEYS_INCLINE_INC);
@@ -113,6 +203,7 @@ static void adjustment_process(KeysId id)
         {
             enter_screen(APP_SCREEN_SPEED);
         }
+        return true;
     }
     else if (is_incline_key &&
              !(Keys_IsPressed(KEYS_INCLINE_DEC) && Keys_IsPressed(KEYS_INCLINE_INC)))
@@ -130,12 +221,41 @@ static void adjustment_process(KeysId id)
             enter_screen(APP_SCREEN_INCLINE);
         }
     }
+    return false;
+}
+
+static void speed_preview_process(uint32_t now_ms, bool has_speed_input,
+                                  bool is_frame_complete)
+{
+    if ((app_state.error_code != 1u) || (app_state.screen != APP_SCREEN_SPEED))
+    {
+        app_state.is_speed_preview = false;
+        return;
+    }
+    if (has_speed_input)
+    {
+        app_state.is_speed_preview = true;
+        is_preview_waiting_for_frame = true;
+        return; /* 本轮速度帧尚未渲染，不能用上一帧的完成信号计时。 */
+    }
+    if (!app_state.is_speed_preview) { return; }
+    if (is_preview_waiting_for_frame)
+    {
+        if (!is_frame_complete) { return; }
+        is_preview_waiting_for_frame = false;
+        preview_started_ms = now_ms;
+    }
+    if ((uint32_t)(now_ms - preview_started_ms) >= APP_COMM_SPEED_PREVIEW_MS)
+    {
+        app_state.is_speed_preview = false;
+    }
 }
 
 void AppControl_Process(uint32_t now_ms, bool is_frame_complete)
 {
     KeysEvent event;
     bool has_stopped = false;
+    bool has_speed_input = false;
     AppScreen previous_screen = app_state.screen;
     uint16_t previous_speed_x10 = app_state.demo_speed_x10;
     uint16_t previous_incline = app_state.demo_incline;
@@ -149,12 +269,13 @@ void AppControl_Process(uint32_t now_ms, bool is_frame_complete)
     /* 停止事件由Keys优先提供；本轮之后的开始/加减不能撤销停止。 */
     for (uint32_t i = 0u; (i < 9u) && Keys_PopEvent(&event); ++i)
     {
+        if (app_state.is_safety_active || is_safety_keys_blocked) { continue; }
         if (event.id == KEYS_STOP)
         {
             enter_screen(APP_SCREEN_STOPPED);
             has_stopped = true;
         }
-        if (has_stopped || Keys_IsPressed(KEYS_STOP))
+        if ((latched_error != 0u) || has_stopped || Keys_IsPressed(KEYS_STOP))
         {
             continue;
         }
@@ -169,9 +290,15 @@ void AppControl_Process(uint32_t now_ms, bool is_frame_complete)
         else if ((app_state.screen == APP_SCREEN_SPEED) ||
                  (app_state.screen == APP_SCREEN_INCLINE))
         {
-            adjustment_process(event.id);
+            has_speed_input = adjustment_process(event.id) || has_speed_input;
         }
     }
+    safety_keys_process(now_ms);
+    if (app_state.is_safety_active)
+    {
+        return;
+    }
+    speed_preview_process(now_ms, has_speed_input, is_frame_complete);
     /* 进入新页这一轮还没有渲染，不能把上一页的完成信号当成新页已显示。 */
     if (!has_stopped && (app_state.screen == previous_screen))
     {

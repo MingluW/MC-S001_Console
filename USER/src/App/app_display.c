@@ -12,6 +12,8 @@ static bool has_submitted_frame;
 static uint8_t submitted_frame[LCD_FRAME_BYTES];
 static AppScreen submitted_screen;
 static uint32_t last_submit_ms;
+static uint8_t submitted_error;
+static bool submitted_safety;
 
 void AppDisplay_Init(uint32_t now_ms)
 {
@@ -19,8 +21,14 @@ void AppDisplay_Init(uint32_t now_ms)
     last_submit_ms = now_ms;
 }
 
-static bool build_frame(const AppState *state, uint8_t frame[LCD_FRAME_BYTES])
+static bool build_frame(const AppState *state, uint8_t visible_error,
+                        uint8_t frame[LCD_FRAME_BYTES])
 {
+    if (state->is_safety_active)
+    {
+        return LcdSegments_BuildSafety(frame);
+    }
+    if (visible_error != 0u) { return LcdSegments_BuildError(visible_error, frame); }
     switch (state->screen)
     {
         case APP_SCREEN_BOOT_ALL:
@@ -63,7 +71,14 @@ void AppDisplay_Process(uint32_t now_ms, const AppState *state)
 {
     uint8_t frame[LCD_FRAME_BYTES];
 
-    if ((state == NULL) || !build_frame(state, frame))
+    if (state == NULL) { return; }
+    uint8_t visible_error = state->error_code;
+    if ((visible_error == 1u) && state->is_speed_preview &&
+        (state->screen == APP_SCREEN_SPEED))
+    {
+        visible_error = 0u;
+    }
+    if (!build_frame(state, visible_error, frame))
     {
         return;
     }
@@ -74,7 +89,9 @@ void AppDisplay_Process(uint32_t now_ms, const AppState *state)
             return;
         }
         /* 切页（尤其STOP）立即提交；同一页的参数变化最多每50ms一次。 */
-        if ((state->screen == submitted_screen) &&
+        if (!state->is_safety_active && !submitted_safety &&
+            !state->is_speed_preview && (visible_error == submitted_error) &&
+            (state->screen == submitted_screen) &&
             ((uint32_t)(now_ms - last_submit_ms) < APP_DISPLAY_INTERVAL_MS))
         {
             return;
@@ -84,6 +101,8 @@ void AppDisplay_Process(uint32_t now_ms, const AppState *state)
     {
         memcpy(submitted_frame, frame, sizeof(submitted_frame));
         submitted_screen = state->screen;
+        submitted_error = visible_error;
+        submitted_safety = state->is_safety_active;
         has_submitted_frame = true;
         last_submit_ms = now_ms;
     }

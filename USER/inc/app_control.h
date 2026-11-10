@@ -12,6 +12,9 @@
 #define APP_BOOT_STEP_MS 500u
 #define APP_WAIT_BLINK_MS 1000u
 #define APP_START_INCLINE_MS 1000u
+#define APP_COMM_SPEED_PREVIEW_MS 500u
+#define APP_SAFETY_RECONNECT_MS 100u
+#define APP_SAFETY_KEYS_RELEASE_MS 30u
 
 typedef enum
 {
@@ -40,6 +43,9 @@ typedef struct
     AppScreen screen;
     uint8_t countdown_digit;
     bool is_wait_visible;
+    bool is_speed_preview; /* 通信异常下速度键临时显示目标值，不清除错误。 */
+    uint8_t error_code; /* 2..15锁存至App复位；1是可恢复通信异常。 */
+    bool is_safety_active;
 } AppState;
 
 /** 初始化为开机全亮，速度/坡度为0；仅主循环，不等待。 */
@@ -56,7 +62,17 @@ bool AppControl_SetSpeedUnit(AppSpeedUnit unit);
  */
 void AppControl_Process(uint32_t now_ms, bool is_frame_complete);
 
+/** 每轮按键处理前输入安全锁原始状态：断开立即触发，接回稳定100ms后解除。
+ * 清零目标并进入停止状态；恢复后全部键释放30ms才接受新操作。
+ * now_ms为毫秒，仅主循环，非阻塞；不直接发送CAN或操作GPIO。 */
+void AppControl_UpdateSafety(uint32_t now_ms, bool is_disconnected);
+
 /** 返回模块持有的只读状态，直到下次Process前有效；不得写入，仅主循环。 */
 const AppState *AppControl_GetState(void);
+
+/** 接收协议诊断：首个普通故障2..15锁存并清零目标、进入停止页、禁止START/加减；
+ * 通信故障随有效应答恢复；主循环、不阻塞。
+ * 不发命令，不把通信恢复当作重新开始。 */
+void AppControl_SetErrors(uint8_t communication_error, uint8_t controller_error);
 
 #endif

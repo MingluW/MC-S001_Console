@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "board_led.h"
+#include "board_safety.h"
 #include "board_stdio.h"
 #include "board_time.h"
 #include "board_uart.h"
@@ -28,6 +29,7 @@ static bool is_lcd_result_reported;
 
 void App_Init(void)
 {
+    BoardSafety_Init();
     BoardUart_Init();
     BoardStdio_Init();
     Log_SetLevel(LOG_LEVEL_DBG);
@@ -41,6 +43,8 @@ void App_Init(void)
     Lcd_Init(last_led_change_ms);
     Keys_Init(last_led_change_ms);
     AppControl_Init();
+    AppControl_UpdateSafety(last_led_change_ms, BoardSafety_IsDisconnected());
+    BoardSafety_SetInhibited(AppControl_GetState()->is_safety_active);
     AppPowerboard_Init();
     AppDisplay_Init(last_led_change_ms);
     AppDisplay_Process(last_led_change_ms, AppControl_GetState());
@@ -134,6 +138,10 @@ static void lcd_process(uint32_t now_ms)
 void App_Process(void)
 {
     uint32_t now_ms = BoardTime_Millis();
+
+    /* 在任何按键/运行请求前检测，断开立即保持硬件禁止；接回由App稳定计时。 */
+    AppControl_UpdateSafety(now_ms, BoardSafety_IsDisconnected());
+    BoardSafety_SetInhibited(AppControl_GetState()->is_safety_active);
 
     /* 每个任务独立判断时间并快速返回，不影响后续任务。 */
     Log_Process(now_ms);

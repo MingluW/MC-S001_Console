@@ -78,7 +78,7 @@ SRC_OBJS_DIRS += ../Driver/n32h47x_48x_std_periph_driver/src/n32h47x_48x_gpio.c
 
 # Handwritten application and board adapters (outside generated regions).
 C_DIRS += ../USER/src/App
-C_DIRS += ../USER/src/Board
+C_DIRS += ../USER/src/Board # includes board_safety.c (PA9/PB6)
 C_DIRS += ../USER/src/Modules/log
 C_DIRS += ../USER/src/Modules/lcd
 C_DIRS += ../USER/src/Modules/keys

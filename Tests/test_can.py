@@ -289,7 +289,9 @@ complete_tx(False)
 process(1, 4)
 process(1000, 4)
 assert len(requests) == 1  # 总线发送失败后不能继续提交订阅。
-assert call("Powerboard_RequestSpeed", 4) == 0
+assert call("Powerboard_RequestSpeed", 4) == 1  # 新的显式输入可以重试。
+process(1001)
+assert len(requests) == 2 and requests[-1][1][5:9] == struct.pack("<f", .4)
 print("PASS: RX input mode/AF route, normalized DLEC=7, RX/ACT/CCCR diagnostics, no subscribe after TX fail")
 
 start_service()
@@ -301,9 +303,11 @@ count = len(requests)
 process(500)
 assert call("Powerboard_RequestSpeed", 4) == 1
 process(501)
-assert call("Powerboard_RequestSpeed", 5) == 0  # 应用应答超时锁存，不自动重发非零目标。
+assert call("Powerboard_GetCommunicationError") == 1
+# 失败后没有新输入就不重发，新的速度输入仍被接受。
+assert call("Powerboard_RequestSpeed", 5) == 1
 process(502, 5)
-assert not any(frame[1][1] == 0x12 for frame in requests[count:])
+assert requests[-1][1][5:9] == struct.pack("<f", .5)
 assert call("Powerboard_RequestStop") == 1
 process(503)
 assert requests[-1][1][5:9] == bytes(4)

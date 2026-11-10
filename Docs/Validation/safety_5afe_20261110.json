@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-10",
+  "feature": "steady 5AFE safety UI",
+  "text": 36332,
+  "data": 104,
+  "bss": 11232,
+  "bin_bytes": 36444,
+  "bin_sha256": "fcb6e39ba8873b8daa8515e72311879bc9faf3ac331e5a126ffe72ff1b3489c5",
+  "tests": [
+    "test_safety_lock.py (includes fault_policy/CAN)",
+    "test_ui_flow.py"
+  ],
+  "flashed": false,
+  "hardware_validated": false
+}

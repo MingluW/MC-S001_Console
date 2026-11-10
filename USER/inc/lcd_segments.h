@@ -30,4 +30,15 @@ bool LcdSegments_BuildIncline(uint16_t value, uint8_t frame[LCD_FRAME_BYTES]);
 /** 构建----，无图标；NULL返回false，否则填满16字节，不保留指针。 */
 bool LcdSegments_BuildStopped(uint8_t frame[LCD_FRAME_BYTES]);
 
+/** 安全锁常亮5AFE，无图标/小数点；16字节输出，NULL失败。
+ * 不保留指针，不访问硬件，仅主循环、非阻塞。 */
+bool LcdSegments_BuildSafety(uint8_t frame[LCD_FRAME_BYTES]);
+
+/** E-0X错误页，0..15；10..15沿用Cypress A..F；16字节输出，无硬件访问。 */
+bool LcdSegments_BuildError(uint8_t code, uint8_t frame[LCD_FRAME_BYTES]);
+/** --00..--16选择页；16为恢复通信，不是故障清除。 */
+bool LcdSegments_BuildSelection(uint8_t code, uint8_t frame[LCD_FRAME_BYTES]);
+/** 七段近似SEnd，16字节输出；NULL失败，均不保留指针、非阻塞、主循环。 */
+bool LcdSegments_BuildSend(uint8_t frame[LCD_FRAME_BYTES]);
+
 #endif

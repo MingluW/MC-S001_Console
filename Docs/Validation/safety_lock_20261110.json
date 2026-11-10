@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-10",
+  "feature": "safety lock",
+  "text": 36464,
+  "data": 104,
+  "bss": 11240,
+  "bin_bytes": 36576,
+  "bin_sha256": "a8fbff5109da693986939b9f598b400c5260d7edf17e97d6267e2759a2f83a6d",
+  "tests": [
+    "Tests/test_safety_lock.py (includes fault_policy and CAN regressions)",
+    "Tests/test_ui_flow.py"
+  ],
+  "flashed": false,
+  "hardware_validated": false,
+  "committed": false,
+  "pushed": false,
+  "backup": "C:/Users/mingluw/AppData/Local/Temp/mcs001-safety-20261110-5248ohkv"
+}

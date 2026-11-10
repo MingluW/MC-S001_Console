@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-10",
+  "change": "E-01 speed-key target preview for 500ms",
+  "console": {
+    "text": 35144,
+    "data": 104,
+    "bss": 11208,
+    "bin_bytes": 35256,
+    "sha256": "3f60c0b113be1bd6ae738740e189026c538805bd28ec82258a7813b59a9c6e7e"
+  },
+  "tests": [
+    "Tests/test_fault_policy.py (includes test_can.py)",
+    "Tests/test_ui_flow.py"
+  ],
+  "flashed": false,
+  "hardware_validated": false,
+  "test_firmware_changed": false
+}

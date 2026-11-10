@@ -18,6 +18,10 @@ typedef enum
 } TransferState;
 
 static bool is_service_ready;
+static bool is_safety_locked;
+static bool is_safety_stop_submitted;
+static uint8_t communication_error;
+static uint8_t controller_error;
 static bool is_run_requested;
 static bool is_faulted;
 static bool has_speed_target;
@@ -57,9 +61,10 @@ static void finish_request(bool success)
     }
     if (!success && (active_command == 0x12u) && !is_preempting)
     {
-        /* 不自动重试运行目标。再次明确按开始才解除，STOP仍允许发送。 */
+        /* 失败目标不自动重发。通信异常保留运行会话，允许新的按键速度请求；
+         * 明确的FP2拒绝仍需START，普通控制器故障只能复位。 */
         is_faulted = true;
-        is_run_requested = false;
+        if (communication_error == 0u) { is_run_requested = false; }
         has_speed_target = false;
         needs_subscription = false;
     }
@@ -69,6 +74,8 @@ static void finish_request(bool success)
 bool Powerboard_Init(void)
 {
     CanTrace_Init();
+    is_safety_locked = is_safety_stop_submitted = false;
+    communication_error = controller_error = 0u;
     is_service_ready = BoardCan_Init();
     is_run_requested = is_faulted = has_speed_target = has_stop_target = false;
     needs_subscription = is_preempting = reported_bus_off = false;
@@ -89,7 +96,8 @@ bool Powerboard_Init(void)
 
 bool Powerboard_RequestStart(uint16_t speed_x10)
 {
-    if (!is_service_ready || (speed_x10 > 300u))
+    if (!is_service_ready || is_safety_locked || (controller_error != 0u) ||
+        (speed_x10 > 300u))
     {
         return false;
     }
@@ -103,10 +111,14 @@ bool Powerboard_RequestStart(uint16_t speed_x10)
 
 bool Powerboard_RequestSpeed(uint16_t speed_x10)
 {
-    if (!is_service_ready || !is_run_requested || is_faulted || (speed_x10 > 300u))
+    if (!is_service_ready || is_safety_locked || !is_run_requested || (controller_error != 0u) ||
+        (is_faulted && (communication_error == 0u)) || (speed_x10 > 300u))
     {
         return false;
     }
+    /* 仅新输入解除通信失败的发送抑制，不自动重发旧目标；恢复后补订阅。 */
+    is_faulted = false;
+    if (communication_error != 0u) { needs_subscription = true; }
     requested_speed_x10 = speed_x10;
     has_speed_target = true;
     return true;
@@ -135,6 +147,21 @@ bool Powerboard_RequestStop(void)
     return true;
 }
 
+bool Powerboard_SetSafetyLock(bool is_active)
+{
+    is_safety_locked = is_active;
+    if (!is_active)
+    {
+        is_safety_stop_submitted = false;
+        return true;
+    }
+    if (!is_safety_stop_submitted)
+    {
+        is_safety_stop_submitted = Powerboard_RequestStop();
+    }
+    return is_safety_stop_submitted;
+}
+
 static void decoded_process(const uint8_t *data, size_t length)
 {
     Fp2Message message;
@@ -159,11 +186,26 @@ static void decoded_process(const uint8_t *data, size_t length)
         }
         if (matches)
         {
+            communication_error = 0u;
             finish_request(message.command == 3u);
         }
     }
     else if (message.command == 5u)
     {
+        if ((message.feature == 2108u) && (message.value >= 2.0f) &&
+            (message.value <= 15.0f) && ((float)(uint8_t)message.value == message.value))
+        {
+            if (controller_error == 0u)
+            {
+                /* 先锁存第一故障并撤销未提交目标，防止同轮RX后继续发非零速度。
+                 * App读取后统一发STOP；后续错误只记录，不覆盖首因。 */
+                controller_error = (uint8_t)message.value;
+                is_run_requested = false;
+                is_faulted = true;
+                has_speed_target = false;
+                needs_subscription = false;
+            }
+        }
         if ((message.feature == FP2_CURRENT_KPH) &&
             (message.value >= 0.0f) && (message.value <= 100.0f))
         {
@@ -282,6 +324,7 @@ static void transfer_process(uint32_t now_ms)
             {
                 ++summary_lost;
             }
+            communication_error = 1u;
             finish_request(false);
         }
         if (is_preempting)
@@ -297,6 +340,7 @@ static void transfer_process(uint32_t now_ms)
         {
             ++summary_lost;
         }
+        communication_error = 1u;
         finish_request(false);
     }
     if (transfer != TRANSFER_IDLE)
@@ -310,7 +354,8 @@ static void transfer_process(uint32_t now_ms)
     {
         return;
     }
-    bool sending_speed = !sending_stop && has_speed_target && !is_faulted;
+    bool sending_speed = !sending_stop && !is_safety_locked && has_speed_target && !is_faulted &&
+        (controller_error == 0u);
     if (sending_stop || sending_speed)
     {
         (void)Fp2_BuildSpeed(sending_stop ? 0u : requested_speed_x10, message);
@@ -409,4 +454,14 @@ void Powerboard_Process(uint32_t now_ms)
         }
     }
     CanTrace_Process(now_ms);
+}
+
+uint8_t Powerboard_GetCommunicationError(void)
+{
+    return communication_error;
+}
+
+uint8_t Powerboard_GetControllerError(void)
+{
+    return controller_error;
 }
